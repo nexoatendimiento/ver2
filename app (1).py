@@ -6,7 +6,7 @@ from datetime import date
 import re
 
 # ---------------------------------------------------------
-# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (NEGRO & AMARILLO)
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILOS (DISEÑO LIMPIO NEGRO & AMARILLO)
 # ---------------------------------------------------------
 st.set_page_config(
     page_title="YSIVAMOS - Fitness Tracker",
@@ -15,88 +15,92 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inyección de CSS Personalizado para Tema Negro/Amarillo de Alto Contraste
+# Estilos CSS de alto contraste y legibilidad
 st.markdown("""
 <style>
-    /* Estilos Generales de la App */
+    /* Fondo principal negro mate */
     .stApp {
-        background-color: #0E0E0E;
-        color: #F5F5F5;
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background-color: #0D0D0D !important;
+        color: #F0F0F0 !important;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
     }
     
-    /* Sidebar styling */
+    /* Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #161616;
-        border-right: 1px solid #282828;
+        background-color: #141414 !important;
+        border-right: 2px solid #222222 !important;
     }
 
-    /* Títulos e Headers */
-    h1, h2, h3, h4 {
+    /* Tipografías y Encabezados */
+    h1 {
+        color: #FFD700 !important;
+        font-weight: 900 !important;
+        font-size: 2.2rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    h2, h3 {
         color: #FFD700 !important;
         font-weight: 800 !important;
-        letter-spacing: -0.5px;
+    }
+    p, label, span {
+        color: #E0E0E0 !important;
+        font-size: 1.05rem !important;
     }
 
-    /* Botones Principales (Amarillo Neón / Texto Negro Bold) */
+    /* Tarjetas Modulares (Cards) */
+    .card-box {
+        background-color: #161616;
+        border: 1px solid #2D2D2D;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+
+    /* Botones Principales (Amarillo Neón / Texto Negro Impreso) */
     div.stButton > button:first-child {
         background: #FFD700 !important;
         color: #000000 !important;
         font-weight: 800 !important;
-        font-size: 1rem !important;
+        font-size: 1.1rem !important;
         border-radius: 8px !important;
         border: none !important;
-        padding: 0.6rem 1.2rem !important;
-        transition: all 0.2s ease-in-out;
-        box-shadow: 0 4px 12px rgba(255, 215, 0, 0.2);
+        padding: 0.75rem 1.5rem !important;
+        width: 100% !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease-in-out !important;
     }
     div.stButton > button:first-child:hover {
-        background: #FFC400 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+        background: #FFE033 !important;
+        transform: scale(1.02) !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
     }
 
-    /* Inputs y Campos de Texto */
-    .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-        background-color: #1A1A1A !important;
+    /* Inputs y Selectboxes */
+    .stTextInput input, .stNumberInput input, div[data-baseweb="select"] > div {
+        background-color: #222222 !important;
         color: #FFFFFF !important;
-        border: 1px solid #333333 !important;
+        border: 1px solid #444444 !important;
         border-radius: 8px !important;
-    }
-    .stTextInput input:focus, .stNumberInput input:focus {
-        border-color: #FFD700 !important;
-        box-shadow: 0 0 0 1px #FFD700 !important;
+        font-size: 1.1rem !important;
     }
 
-    /* Tarjetas y Contenedores */
-    .css-card {
-        background-color: #181818;
-        border: 1px solid #282828;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-    }
-
-    /* Tablas de Pandas / Dataframes */
-    [data-testid="stDataFrame"] {
-        background-color: #181818;
-        border: 1px solid #2D2D2D;
-        border-radius: 8px;
-    }
-
-    /* Métrica Destacada */
+    /* Métricas */
     [data-testid="stMetricValue"] {
         color: #FFD700 !important;
-        font-size: 2.2rem !important;
-        font-weight: 800;
+        font-size: 2.5rem !important;
+        font-weight: 900 !important;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #AAAAAA !important;
+        font-size: 1.1rem !important;
     }
 
-    /* Alertas / Informaciones */
-    .stAlert {
-        background-color: #1A1A1A;
-        color: #FFD700;
-        border: 1px solid #FFD700;
-        border-radius: 8px;
+    /* Tablas de datos */
+    [data-testid="stDataFrame"] {
+        background-color: #1A1A1A !important;
+        border: 1px solid #333333 !important;
+        border-radius: 8px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -107,9 +111,8 @@ st.markdown("""
 conn = sqlite3.connect("fitness_app.db", check_same_thread=False)
 c = conn.cursor()
 
-# Tablas de Usuarios, Registros y Nutrición
 c.execute('''CREATE TABLE IF NOT EXISTS usuarios 
-             (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT, status TEXT)''')
+             (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT UNIQUE, password TEXT, provider TEXT, status TEXT)''')
 
 c.execute('''CREATE TABLE IF NOT EXISTS registro_entrenamiento 
              (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT, fecha TEXT, bloque TEXT, ejercicio TEXT, peso REAL, reps INT, rpe INT)''')
@@ -118,15 +121,23 @@ c.execute('''CREATE TABLE IF NOT EXISTS registro_nutricion
              (user_email TEXT, fecha TEXT, proteinas REAL, carbos REAL, grasas REAL, agua REAL, PRIMARY KEY (user_email, fecha))''')
 conn.commit()
 
-# Manejo de Estado de Sesión Persistente
 if 'user' not in st.session_state:
     st.session_state['user'] = None
 if 'auth_stage' not in st.session_state:
-    st.session_state['auth_stage'] = 'login' # login, verify, set_password
+    st.session_state['auth_stage'] = 'login'
 if 'temp_email' not in st.session_state:
     st.session_state['temp_email'] = ""
 
-# ----------------- BASE DE DATOS DE EJERCICIOS Y TÉCNICA -----------------
+# Verificación Google OAuth Native Streamlit Cloud
+try:
+    if st.user and st.user.email:
+        st.session_state['user'] = st.user.email
+        c.execute("INSERT OR IGNORE INTO usuarios (email, provider, status) VALUES (?, ?, ?)", (st.user.email, "google", "activo"))
+        conn.commit()
+except AttributeError:
+    pass
+
+# BASE DE DATOS DE RUTINAS
 RUTINAS = {
     "⚡ Día 1: Upper (Torso - Fuerza)": [
         "Press Inclinado con Mancuernas",
@@ -170,73 +181,70 @@ RUTINAS = {
 }
 
 # ---------------------------------------------------------
-# 3. MÓDULO DE LOGIN Y AUTENTICACIÓN
+# 3. PANTALLA DE LOGIN
 # ---------------------------------------------------------
 def login_screen():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("<h1 style='text-align: center; color: #FFD700;'>⚡ YSIVAMOS</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #AAAAAA;'>Tu Plataforma de Entrenamiento y Nutrición</p>", unsafe_allow_html=True)
-        st.divider()
+        st.markdown("<br><h1 style='text-align: center;'>⚡ YSIVAMOS FITNESS</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #AAAAAA; font-size: 1.2rem;'>Inicia sesión para acceder a tus rutinas y nutrición</p><br>", unsafe_allow_html=True)
 
+        st.markdown("<div class='card-box'>", unsafe_allow_html=True)
         if st.session_state['auth_stage'] == 'login':
-            st.subheader("Iniciar Sesión / Registro")
-            email_input = st.text_input("Correo Electrónico", placeholder="tu@email.com")
+            st.subheader("Acceso")
             
-            st.markdown("**O ingresa de forma rápida con:**")
-            col_g, col_e = st.columns(2)
-            with col_g:
-                if st.button("🌐 Entrar con Google"):
-                    # Simulación de auth directo con Google
-                    st.session_state['user'] = "usuario_google@gmail.com"
+            if hasattr(st, "login"):
+                st.login("google", label="🌐 Conectar con Google")
+                st.markdown("<p style='text-align:center; color:#666;'>— o ingresa con tu correo —</p>", unsafe_allow_html=True)
+            
+            email_input = st.text_input("Correo Electrónico", placeholder="ejemplo@correo.com")
+            
+            if st.button("📩 Recibir Código OTP por Correo"):
+                if re.match(r"[^@]+@[^@]+\.[^@]+", email_input):
+                    st.session_state['temp_email'] = email_input
+                    st.session_state['auth_stage'] = 'verify'
+                    st.success("¡Código enviado! Usa el código de prueba: 123456")
                     st.rerun()
+                else:
+                    st.error("Ingresa un correo electrónico válido.")
 
-            with col_e:
-                if st.button("📩 Enviar Código OTP"):
-                    if re.match(r"[^@]+@[^@]+\.[^@]+", email_input):
-                        st.session_state['temp_email'] = email_input
-                        st.session_state['auth_stage'] = 'verify'
-                        st.success("¡Código de verificación enviado a tu correo! (Código de prueba: 123456)")
-                        st.rerun()
-                    else:
-                        st.error("Por favor, ingresa un correo válido.")
-
-            st.divider()
-            st.markdown("### ¿Ya tienes contraseña?")
+            st.write("---")
+            st.markdown("### Acceso con Contraseña")
             pass_input = st.text_input("Contraseña", type="password")
-            if st.button("Ingresar con Contraseña"):
+            if st.button("Ingresar"):
                 c.execute("SELECT email FROM usuarios WHERE email=? AND password=?", (email_input, pass_input))
                 user = c.fetchone()
                 if user:
                     st.session_state['user'] = user[0]
                     st.rerun()
                 else:
-                    st.error("Correo o contraseña incorrectos.")
+                    st.error("Usuario o contraseña incorrectos.")
 
         elif st.session_state['auth_stage'] == 'verify':
-            st.subheader(f"Verificar Correo: {st.session_state['temp_email']}")
-            code_input = st.text_input("Ingresa el código de 6 dígitos", placeholder="123456")
+            st.subheader(f"Verificar: {st.session_state['temp_email']}")
+            code_input = st.text_input("Código de 6 dígitos", placeholder="123456")
             
-            if st.button("Verificar Código"):
-                if code_input == "123456": # Código de prueba simulado
-                    c.execute("INSERT OR IGNORE INTO usuarios (email, status) VALUES (?, ?)", (st.session_state['temp_email'], "activo"))
+            if st.button("Confirmar Código"):
+                if code_input == "123456":
+                    c.execute("INSERT OR IGNORE INTO usuarios (email, provider, status) VALUES (?, ?, ?)", (st.session_state['temp_email'], "email", "activo"))
                     conn.commit()
                     st.session_state['auth_stage'] = 'set_password'
                     st.rerun()
                 else:
-                    st.error("Código incorrecto. Prueba con 123456")
+                    st.error("Código incorrecto. Usa 123456")
 
         elif st.session_state['auth_stage'] == 'set_password':
-            st.subheader("Define tu Contraseña (Opcional)")
+            st.subheader("Crea tu Contraseña")
             new_pass = st.text_input("Nueva Contraseña", type="password")
             
-            if st.button("Guardar Contraseña e Ingresar"):
+            if st.button("Guardar e Iniciar Sesión"):
                 if new_pass:
                     c.execute("UPDATE usuarios SET password=? WHERE email=?", (new_pass, st.session_state['temp_email']))
                     conn.commit()
                 st.session_state['user'] = st.session_state['temp_email']
                 st.session_state['auth_stage'] = 'login'
                 st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # 4. APLICACIÓN PRINCIPAL (POST-LOGIN)
@@ -244,110 +252,22 @@ def login_screen():
 if not st.session_state['user']:
     login_screen()
 else:
-    # Sidebar de Usuario y Navegación
-    st.sidebar.markdown(f"👤 **Usuario:** `{st.session_state['user']}`")
-    if st.sidebar.button("🚪 Cerrar Sesión"):
-        st.session_state['user'] = None
-        st.session_state['auth_stage'] = 'login'
-        st.rerun()
+    # Sidebar
+    st.sidebar.markdown(f"### 👤 Usuario\n`{st.session_state['user']}`")
+    
+    if hasattr(st, "logout"):
+        if st.sidebar.button("🚪 Cerrar Sesión"):
+            st.session_state['user'] = None
+            st.session_state['auth_stage'] = 'login'
+            st.logout()
+    else:
+        if st.sidebar.button("🚪 Cerrar Sesión"):
+            st.session_state['user'] = None
+            st.session_state['auth_stage'] = 'login'
+            st.rerun()
 
-    st.sidebar.divider()
-    opcion = st.sidebar.radio("Navegación", ["🏋️ Entrenamiento", "⏱️ Temporizador", "🥗 Nutrición", "📈 Sobrecarga Progresiva"])
+    st.sidebar.write("---")
+    opcion = st.sidebar.radio("MENÚ PRINCIPAL", ["🏋️ Registrar Rutina", "⏱️ Temporizador", "🥗 Nutrición", "📈 Sobrecarga Progresiva"])
 
-    # ----------------- 1. REGISTRO DE ENTRENAMIENTO -----------------
-    if opcion == "🏋️ Entrenamiento":
-        st.markdown("# 🏋️ Registro de Rutina Diaria")
-        
-        col1, col2 = st.columns([1.2, 1])
-        with col1:
-            st.markdown("<div class='css-card'>", unsafe_allow_html=True)
-            bloque_sel = st.selectbox("Selecciona la sesión de hoy:", list(RUTINAS.keys()))
-            ejercicio_sel = st.selectbox("Selecciona el Ejercicio:", RUTINAS[bloque_sel])
-            
-            col_p, col_r = st.columns(2)
-            with col_p:
-                peso = st.number_input("Carga Utilizada (kg)", min_value=0.0, value=20.0, step=0.5)
-            with col_r:
-                reps = st.number_input("Repeticiones", min_value=1, value=10, step=1)
-                
-            rpe = st.select_slider("Esfuerzo Percibido (RPE)", options=list(range(1, 11)), value=8)
-            
-            if st.button("💾 Guardar Serie", use_container_width=True):
-                fecha_actual = str(date.today())
-                c.execute("INSERT INTO registro_entrenamiento (user_email, fecha, bloque, ejercicio, peso, reps, rpe) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                          (st.session_state['user'], fecha_actual, bloque_sel, ejercicio_sel, peso, reps, rpe))
-                conn.commit()
-                st.success(f"¡Serie registrada! {ejercicio_sel} -> {peso} kg x {reps} reps")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        with col2:
-            st.markdown("<div class='css-card'>", unsafe_allow_html=True)
-            st.subheader("💡 Guía de Técnica")
-            st.info("💡 Mantén la escápula retraída, rango de movimiento completo y controla la bajada en 2-3 segundos.")
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        st.divider()
-        st.subheader("📋 Series Registradas Hoy")
-        df_hoy = pd.read_sql_query(f"SELECT bloque, ejercicio, peso, reps, rpe FROM registro_entrenamiento WHERE user_email='{st.session_state['user']}' AND fecha='{date.today()}'", conn)
-        if not df_hoy.empty:
-            st.dataframe(df_hoy, use_container_width=True)
-        else:
-            st.info("Aún no has registrado series el día de hoy.")
-
-    # ----------------- 2. TEMPORIZADOR DE DESCANSO -----------------
-    elif opcion == "⏱️ Temporizador":
-        st.markdown("# ⏱️ Cronómetro Inter-Series")
-        col_t1, col_t2, col_t3 = st.columns(3)
-        tiempo_seg = 0
-        if col_t1.button("60s (Accesorios)"):
-            tiempo_seg = 60
-        if col_t2.button("90s (Hipertrofia)"):
-            tiempo_seg = 90
-        if col_t3.button("120s (Fuerza)"):
-            tiempo_seg = 120
-
-        if tiempo_seg > 0:
-            placeholder = st.empty()
-            for i in range(tiempo_seg, -1, -1):
-                mins, secs = divmod(i, 60)
-                placeholder.markdown(f"<h1 style='text-align: center; font-size: 5rem; color: #FFD700;'>{mins:02d}:{secs:02d}</h1>", unsafe_allow_html=True)
-                time.sleep(1)
-            st.balloons()
-            st.success("🔔 ¡Tiempo cumplido! A por la siguiente serie.")
-
-    # ----------------- 3. CONTROL DE NUTRICIÓN -----------------
-    elif opcion == "🥗 Nutrición":
-        st.markdown("# 🥗 Control de Macros Diarios")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            prot = st.number_input("Proteínas (g)", min_value=0, value=175)
-        with col2:
-            carbs = st.number_input("Carbohidratos (g)", min_value=0, value=180)
-        with col3:
-            grasas = st.number_input("Grasas (g)", min_value=0, value=80)
-
-        calorias = (prot * 4) + (carbs * 4) + (grasas * 9)
-        st.metric("Total Calorías Diarias", f"{calorias} kcal")
-
-        agua = st.slider("Agua (Litros)", 0.0, 5.0, 2.5, step=0.25)
-
-        if st.button("Guardar Macros de Hoy", use_container_width=True):
-            fecha_actual = str(date.today())
-            c.execute("INSERT OR REPLACE INTO registro_nutricion VALUES (?, ?, ?, ?, ?, ?)",
-                      (st.session_state['user'], fecha_actual, prot, carbs, grasas, agua))
-            conn.commit()
-            st.success("¡Macros guardados con éxito!")
-
-    # ----------------- 4. SOBRECARGA PROGRESIVA -----------------
-    elif opcion == "📈 Sobrecarga Progresiva":
-        st.markdown("# 📈 Evolución de Cargas")
-        df_progresos = pd.read_sql_query(f"SELECT fecha, ejercicio, peso, reps FROM registro_entrenamiento WHERE user_email='{st.session_state['user']}'", conn)
-
-        if not df_progresos.empty:
-            ejercicio_sel = st.selectbox("Selecciona un Ejercicio para analizar:", df_progresos["ejercicio"].unique())
-            df_filtrado = df_progresos[df_progresos["ejercicio"] == ejercicio_sel]
-
-            st.line_chart(df_filtrado.set_index("fecha")["peso"])
-            st.dataframe(df_filtrado, use_container_width=True)
-        else:
-            st.info("Aún no hay registros de fuerza en tu cuenta.")
+    # 1. ENTRENAMIENTO
+    if opcion == "🏋️ Registrar Rutina
